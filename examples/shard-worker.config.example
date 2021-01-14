@@ -29,8 +29,6 @@ operation_poll_period: {
   nanos: 0
 }
 
-dequeue_match_settings: {
-
   # key/value set of defining capabilities of this worker
   # all execute requests must match perfectly with workers which
   # provide capabilities
@@ -46,8 +44,6 @@ dequeue_match_settings: {
     #   value: "value_string"
     # }
   }
-
-}
 
 # the worker CAS configuration
 cas: {
