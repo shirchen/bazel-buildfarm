@@ -60,11 +60,11 @@ cas: {
 
     # limit for contents of files retained
     # from CAS in the cache
-    max_size_bytes: 2147483648 # 2 * 1024 * 1024 * 1024
+    max_size_bytes: 858993459200 # 800 * 1024 * 1024 * 1024
 
     # limit for content size of files retained
     # from CAS in the cache
-    max_entry_size_bytes: 2147483648 # 2 * 1024 * 1024 * 1024
+    max_entry_size_bytes: 858993459200 # 800 * 1024 * 1024 * 1024
 
     # whether the file directories bidirectional mapping should be stored in memory (HashMap) or
     # in sqlite
