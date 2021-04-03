@@ -28,7 +28,7 @@ operation_poll_period: {
   seconds: 1
   nanos: 0
 }
-
+dequeue_match_settings: {
   # key/value set of defining capabilities of this worker
   # all execute requests must match perfectly with workers which
   # provide capabilities
@@ -44,7 +44,7 @@ operation_poll_period: {
     #   value: "value_string"
     # }
   }
-
+}
 # the worker CAS configuration
 cas: {
   # present a filesystem CAS, required to host an exec root
