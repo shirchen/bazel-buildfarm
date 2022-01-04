@@ -329,7 +329,7 @@ public abstract class AbstractServerInstance implements Instance {
   private static boolean shouldEnsureOutputsPresent(RequestMetadata requestMetadata) {
     try {
       URI uri = new URI(requestMetadata.getCorrelatedInvocationsId());
-      System.out.println("uri is" + uri.toString());
+      System.out.println("uri is " + uri.toString());
       QueryStringDecoder decoder = new QueryStringDecoder(uri);
       return decoder
           .parameters()
