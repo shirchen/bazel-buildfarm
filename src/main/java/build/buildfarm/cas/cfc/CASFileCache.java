@@ -393,7 +393,7 @@ public abstract class CASFileCache implements ContentAddressableStorage {
         result.mergeFrom(digest).setSizeBytes(entry.size);
       }
       onContains.accept(key);
-      return Files.exists(getPath(key));
+      return true;
     }
     return false;
   }
