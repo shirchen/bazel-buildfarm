@@ -170,6 +170,8 @@ public class ByteStreamService extends ByteStreamGrpc.ByteStreamImplBase {
       case UploadBlob:
         return findBlobWrite(resourceName);
       case OperationStream:
+      case UploadCompressedBlobZstd:
+        return findBlobWrite(resourceName);
       default:
         throw Status.INVALID_ARGUMENT.asRuntimeException();
     }

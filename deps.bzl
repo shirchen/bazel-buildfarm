@@ -62,10 +62,15 @@ def archive_dependencies(third_party):
             "build_file": "%s:BUILD.remote_apis" % third_party,
             "patch_args": ["-p1"],
             "patches": ["%s/remote-apis:remote-apis.patch" % third_party],
-            "sha256": "1d69f5f2f694fe93ee78a630f196047892ae51878297a89601c98964486655c6",
-            "strip_prefix": "remote-apis-6345202a036a297b22b0a0e7531ef702d05f2130",
-            "url": "https://github.com/bazelbuild/remote-apis/archive/6345202a036a297b22b0a0e7531ef702d05f2130.zip",
+            "sha256": "743d2d5b5504029f3f825beb869ce0ec2330b647b3ee465a4f39ca82df83f8bf",
+            "strip_prefix": "remote-apis-636121a32fa7b9114311374e4786597d8e7a69f3",
+            "url": "https://github.com/bazelbuild/remote-apis/archive/636121a32fa7b9114311374e4786597d8e7a69f3.zip",
         },
+        #        {
+        #            "name": "zstd-jni",
+        #            "sha256": "d320d59b89a163c5efccbe4915ae6a49883ce653cdc670643dfa21c6063108e4",
+        #            "url": "https://github.com/luben/zstd-jni/archive/v1.5.0-4.zip",
+        #        },
         {
             "name": "rules_cc",
             "sha256": "34b2ebd4f4289ebbc27c7a0d854dcd510160109bb0194c0ba331c9656ffcb556",
@@ -90,9 +95,9 @@ def archive_dependencies(third_party):
         # Bazel is referenced as a dependency so that buildfarm can access the linux-sandbox as a potential execution wrapper.
         {
             "name": "bazel",
-            "sha256": "bca2303a43c696053317a8c7ac09a5e6d90a62fec4726e55357108bb60d7a807",
-            "strip_prefix": "bazel-3.7.2",
-            "urls": ["https://github.com/bazelbuild/bazel/archive/3.7.2.tar.gz"],
+            "sha256": "3d63d1463672a8afb987207aff6b5faf13893f0652c03ef90eb0676781286a9e",
+            "strip_prefix": "bazel-6.0.0-pre.20211202.4",
+            "urls": ["https://github.com/bazelbuild/bazel/archive/refs/tags/6.0.0-pre.20211202.4.tar.gz"],
             "patch_args": ["-p1"],
             "patches": ["%s/bazel:bazel_visibility.patch" % third_party],
         },

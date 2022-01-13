@@ -33,30 +33,8 @@ import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-import build.bazel.remote.execution.v2.Action;
-import build.bazel.remote.execution.v2.ActionCacheUpdateCapabilities;
-import build.bazel.remote.execution.v2.ActionResult;
+import build.bazel.remote.execution.v2.*;
 import build.bazel.remote.execution.v2.BatchReadBlobsResponse.Response;
-import build.bazel.remote.execution.v2.BatchUpdateBlobsResponse;
-import build.bazel.remote.execution.v2.CacheCapabilities;
-import build.bazel.remote.execution.v2.Command;
-import build.bazel.remote.execution.v2.Digest;
-import build.bazel.remote.execution.v2.Directory;
-import build.bazel.remote.execution.v2.DirectoryNode;
-import build.bazel.remote.execution.v2.ExecuteOperationMetadata;
-import build.bazel.remote.execution.v2.ExecuteResponse;
-import build.bazel.remote.execution.v2.ExecutionCapabilities;
-import build.bazel.remote.execution.v2.ExecutionPolicy;
-import build.bazel.remote.execution.v2.ExecutionStage;
-import build.bazel.remote.execution.v2.FileNode;
-import build.bazel.remote.execution.v2.OutputDirectory;
-import build.bazel.remote.execution.v2.OutputFile;
-import build.bazel.remote.execution.v2.Platform;
-import build.bazel.remote.execution.v2.RequestMetadata;
-import build.bazel.remote.execution.v2.ResultsCachePolicy;
-import build.bazel.remote.execution.v2.ServerCapabilities;
-import build.bazel.remote.execution.v2.SymlinkAbsolutePathStrategy;
-import build.bazel.remote.execution.v2.SymlinkNode;
 import build.buildfarm.ac.ActionCache;
 import build.buildfarm.cas.ContentAddressableStorage;
 import build.buildfarm.cas.ContentAddressableStorage.Blob;
@@ -1823,12 +1801,13 @@ public abstract class AbstractServerInstance implements Instance {
 
   protected CacheCapabilities getCacheCapabilities() {
     return CacheCapabilities.newBuilder()
-        .addDigestFunction(digestUtil.getDigestFunction())
-        .setActionCacheUpdateCapabilities(
-            ActionCacheUpdateCapabilities.newBuilder().setUpdateEnabled(true))
-        .setMaxBatchTotalSizeBytes(Size.mbToBytes(4))
-        .setSymlinkAbsolutePathStrategy(SymlinkAbsolutePathStrategy.Value.DISALLOWED)
-        .build();
+            .addDigestFunctions(digestUtil.getDigestFunction())
+            .setActionCacheUpdateCapabilities(
+                    ActionCacheUpdateCapabilities.newBuilder().setUpdateEnabled(true))
+            .setMaxBatchTotalSizeBytes(Size.mbToBytes(4))
+            .setSymlinkAbsolutePathStrategy(SymlinkAbsolutePathStrategy.Value.DISALLOWED)
+            .addSupportedCompressors(Compressor.Value.ZSTD)
+            .build();
   }
 
   protected ExecutionCapabilities getExecutionCapabilities() {

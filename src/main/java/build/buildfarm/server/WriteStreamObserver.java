@@ -14,9 +14,7 @@
 
 package build.buildfarm.server;
 
-import static build.buildfarm.common.UrlPath.detectResourceOperation;
-import static build.buildfarm.common.UrlPath.parseUploadBlobDigest;
-import static build.buildfarm.common.UrlPath.parseUploadBlobUUID;
+import static build.buildfarm.common.UrlPath.*;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static io.grpc.Status.ABORTED;
@@ -36,6 +34,7 @@ import com.google.bytestream.ByteStreamProto.WriteRequest;
 import com.google.bytestream.ByteStreamProto.WriteResponse;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
+import com.google.devtools.build.lib.remote.zstd.ZstdDecompressingOutputStream;
 import com.google.protobuf.ByteString;
 import io.grpc.Context;
 import io.grpc.Context.CancellableContext;
@@ -124,6 +123,11 @@ class WriteStreamObserver implements StreamObserver<WriteRequest> {
         expectedCommittedSize = uploadBlobDigest.getSizeBytes();
         return ByteStreamService.getUploadBlobWrite(
             instance, uploadBlobDigest, parseUploadBlobUUID(resourceName));
+      case UploadCompressedBlobZstd:
+        uploadBlobDigest = parseUploadBlobDigest(resourceName);
+        expectedCommittedSize = uploadBlobDigest.getSizeBytes();
+        return ByteStreamService.getUploadBlobWriteCompressedZstd(
+                instance, uploadBlobDigest, parseUploadCompressedBlobUUID(resourceName));
       case OperationStream:
         return ByteStreamService.getOperationStreamWrite(instance, resourceName);
       case Blob:
@@ -239,7 +243,7 @@ class WriteStreamObserver implements StreamObserver<WriteRequest> {
 
   private void logWriteRequest(WriteRequest request, Exception e) {
     logger.log(
-        Level.WARNING,
+        Level.FINE,
         format(
             "write: %s, %d bytes%s",
             request.getResourceName(),
@@ -279,8 +283,13 @@ class WriteStreamObserver implements StreamObserver<WriteRequest> {
     if (resourceName.isEmpty()) {
       resourceName = name;
     }
+    ByteString data = request.getData();
+    if (request.getResourceName().contains("compressed")) {
+      // decompress data
+
+    }
     handleWrite(
-        resourceName, request.getWriteOffset(), request.getData(), request.getFinishWrite());
+        resourceName, request.getWriteOffset(), data, request.getFinishWrite());
   }
 
   @GuardedBy("this")

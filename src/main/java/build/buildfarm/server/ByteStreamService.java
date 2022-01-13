@@ -14,10 +14,7 @@
 
 package build.buildfarm.server;
 
-import static build.buildfarm.common.UrlPath.detectResourceOperation;
-import static build.buildfarm.common.UrlPath.parseBlobDigest;
-import static build.buildfarm.common.UrlPath.parseUploadBlobDigest;
-import static build.buildfarm.common.UrlPath.parseUploadBlobUUID;
+import static build.buildfarm.common.UrlPath.*;
 import static com.google.common.util.concurrent.Futures.immediateFailedFuture;
 import static io.grpc.Status.INVALID_ARGUMENT;
 import static io.grpc.Status.NOT_FOUND;
@@ -305,6 +302,9 @@ public class ByteStreamService extends ByteStreamImplBase {
       case Blob:
         readBlob(instance, parseBlobDigest(resourceName), offset, limit, responseObserver);
         break;
+      case CompressedBlob:
+        readBlob(instance, parseBlobDigest(resourceName), offset, limit, responseObserver);
+        break;
       case OperationStream:
         readOperationStream(instance, resourceName, offset, limit, responseObserver);
         break;
@@ -335,6 +335,25 @@ public class ByteStreamService extends ByteStreamImplBase {
   public void queryWriteStatus(
       QueryWriteStatusRequest request, StreamObserver<QueryWriteStatusResponse> responseObserver) {
     String resourceName = request.getResourceName();
+    // here, we want to change the resource.
+    System.out.println("querying for resource but " + resourceName);
+    if (resourceName.contains("compressed-blobs")) {
+      Digest digest = null;
+      try {
+        digest = parseBlobDigest(resourceName);
+      } catch (InvalidResourceNameException e) {
+
+      }
+      UUID uuid = null;
+      try {
+        uuid = parseUploadCompressedBlobUUID(resourceName);
+      } catch (InvalidResourceNameException e) {
+
+      }
+      // uploads/2a528a78-9d74-4932-b592-ee3abfda45e2/compressed-blobs/zstd/0cf82bbecc394a79f9a6713cb6fd63f40e53001e99a37e0e1ff6cc1ce8b44db8/594
+      resourceName = format("uploads/%s/blobs/%s/%d", uuid, digest.getHash(), digest.getSizeBytes());
+      System.out.println("rewrote resource as " + resourceName);
+    }
     try {
       logger.log(Level.FINE, format("queryWriteStatus(%s)", resourceName));
       Write write = getWrite(resourceName);
@@ -408,6 +427,15 @@ public class ByteStreamService extends ByteStreamImplBase {
     return instance.getBlobWrite(digest, uuid, TracingMetadataUtils.fromCurrentContext());
   }
 
+  static Write getUploadBlobWriteCompressedZstd(Instance instance, Digest digest, UUID uuid)
+          throws EntryLimitException {
+    if (digest.getSizeBytes() == 0) {
+      return new CompleteWrite(0);
+    }
+    // TODO: decompress.
+    return instance.getBlobWrite(digest, uuid, TracingMetadataUtils.fromCurrentContext());
+  }
+
   static Write getOperationStreamWrite(Instance instance, String resourceName) {
     return instance.getOperationStreamWrite(resourceName);
   }
@@ -416,9 +444,13 @@ public class ByteStreamService extends ByteStreamImplBase {
     switch (detectResourceOperation(resourceName)) {
       case Blob:
         return getBlobWrite(instance, parseBlobDigest(resourceName));
+      case UploadCompressedBlobZstd:
+        System.out.println("in zstd");
+        getUploadBlobWrite(
+                instance, parseUploadBlobDigest(resourceName), parseUploadCompressedBlobUUID(resourceName));
       case UploadBlob:
         return getUploadBlobWrite(
-            instance, parseUploadBlobDigest(resourceName), parseUploadBlobUUID(resourceName));
+                instance, parseUploadBlobDigest(resourceName), parseUploadBlobUUID(resourceName));
       case OperationStream:
         return getOperationStreamWrite(instance, resourceName);
       default:

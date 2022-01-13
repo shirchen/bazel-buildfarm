@@ -78,6 +78,7 @@ def buildfarm_init(name = "buildfarm"):
                         "com.github.jnr:jnr-constants:0.9.9",
                         "com.github.jnr:jnr-ffi:2.1.7",
                         "com.github.jnr:jnr-posix:3.0.53",
+                        "com.github.luben:zstd-jni:1.5.0-4",
                         "com.github.pcj:google-options:1.0.0",
                         "com.github.serceman:jnr-fuse:0.5.5",
                         "com.google.auth:google-auth-library-credentials:0.9.1",

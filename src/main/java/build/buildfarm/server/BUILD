@@ -48,5 +48,6 @@ java_library(
         "@remote_apis//:build_bazel_remote_asset_v1_remote_asset_java_proto",
         "@remote_apis//:build_bazel_remote_execution_v2_remote_execution_java_grpc",
         "@remote_apis//:build_bazel_semver_java_proto",
+        #        "@zstd-jni//:zstd-jni",
     ],
 )

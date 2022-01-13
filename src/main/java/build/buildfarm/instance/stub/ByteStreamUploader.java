@@ -209,6 +209,15 @@ public class ByteStreamUploader {
     }
   }
 
+  public static String uploadCompressedResourceName(
+          String instanceName, UUID uuid, HashCode hash, long size) {
+    String resourceName = format("uploads/%s/compressed-blobs/zstd/%s/%d", uuid, hash, size);
+    if (!Strings.isNullOrEmpty(instanceName)) {
+      resourceName = instanceName + "/" + resourceName;
+    }
+    return resourceName;
+  }
+
   public static String uploadResourceName(
       String instanceName, UUID uuid, HashCode hash, long size) {
     String resourceName = format("uploads/%s/blobs/%s/%d", uuid, hash, size);

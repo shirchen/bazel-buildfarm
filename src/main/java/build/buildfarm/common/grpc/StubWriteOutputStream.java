@@ -248,9 +248,9 @@ public class StubWriteOutputStream extends FeedbackOutputStream implements Write
     if (isComplete()) {
       throw new WriteCompleteException();
     }
-    if (getCommittedSize() + offset + len > expectedSize) {
-      throw new IndexOutOfBoundsException("write would exceed expected size");
-    }
+//    if (getCommittedSize() + offset + len > expectedSize) {
+//      throw new IndexOutOfBoundsException("write would exceed expected size");
+//    }
     boolean lastFlushed = false;
     while (len > 0 && !checkComplete()) {
       lastFlushed = false;
