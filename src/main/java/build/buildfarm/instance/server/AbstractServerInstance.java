@@ -331,30 +331,7 @@ public abstract class AbstractServerInstance implements Instance {
 
   private static boolean shouldEnsureOutputsPresent(
       boolean ensureOutputsPresent, RequestMetadata requestMetadata) {
-    // The 'ensure outputs present' setting means that the AC will only return results to the client
-    // when all of the action output blobs are present in the CAS.  If any one blob is missing, the
-    // system will return a cache miss.  Although this is a more expensive check to perform, some
-    // users may want to enable this feature. It may be useful if you cannot rely on requestMetadata
-    // of incoming messages (perhaps due to a proxy). Or other build systems may not be reliable
-    // without this extra check.
-
-    // We perform the outputs present check if the system is globally configured to check for it.
-    // Otherwise the behavior is determined dynamically from optional URI parameters.
-    if (ensureOutputsPresent) {
-      return true;
-    }
-
-    try {
-      URI uri = new URI(requestMetadata.getCorrelatedInvocationsId());
-      QueryStringDecoder decoder = new QueryStringDecoder(uri);
-      return decoder
-          .parameters()
-          .getOrDefault("ENSURE_OUTPUTS_PRESENT", ImmutableList.of("false"))
-          .get(0)
-          .equals("true");
-    } catch (URISyntaxException e) {
-      return false;
-    }
+	  return true;
   }
 
   @Override
