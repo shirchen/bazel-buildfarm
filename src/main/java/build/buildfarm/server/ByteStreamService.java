@@ -35,6 +35,7 @@ import build.buildfarm.common.grpc.TracingMetadataUtils;
 import build.buildfarm.common.grpc.UniformDelegateServerCallStreamObserver;
 import build.buildfarm.common.io.FeedbackOutputStream;
 import build.buildfarm.instance.Instance;
+import com.github.luben.zstd.Zstd;
 import com.google.bytestream.ByteStreamGrpc.ByteStreamImplBase;
 import com.google.bytestream.ByteStreamProto.QueryWriteStatusRequest;
 import com.google.bytestream.ByteStreamProto.QueryWriteStatusResponse;
@@ -49,8 +50,11 @@ import io.grpc.Status.Code;
 import io.grpc.stub.CallStreamObserver;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
+import org.apache.commons.compress.compressors.zstandard.ZstdCompressorInputStream;
+
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.nio.file.NoSuchFileException;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -93,13 +97,16 @@ public class ByteStreamService extends ByteStreamImplBase {
 
   void readFrom(InputStream in, long limit, CallStreamObserver<ReadResponse> target) {
     final class ReadFromOnReadyHandler implements Runnable {
-      private final byte[] buf = new byte[CHUNK_SIZE];
+      private byte[] buf = new byte[CHUNK_SIZE];
       private final boolean unlimited = limit == 0;
       private long remaining = limit;
       private boolean complete = false;
 
       ReadResponse next() throws IOException {
         int readBytes = in.read(buf, 0, (int) Math.min(remaining, buf.length));
+        logger.log(Level.FINE, format("reading buffer %s", buf));
+        buf = Zstd.compress(buf);
+        logger.log(Level.FINE, format("after compression buffer %s", buf));
         if (readBytes <= 0) {
           if (readBytes == -1) {
             if (!unlimited) {
@@ -209,6 +216,12 @@ public class ByteStreamService extends ByteStreamImplBase {
           } else {
             slice = data;
             data = ByteString.EMPTY;
+          }
+          boolean compression = true;
+          if (compression) {
+            byte[] c = new byte[slice.size()];
+            slice.copyTo(c, 0);
+            slice = ByteString.copyFrom(Zstd.compress(c));
           }
           responseObserver.onNext(ReadResponse.newBuilder().setData(slice).build());
         }
