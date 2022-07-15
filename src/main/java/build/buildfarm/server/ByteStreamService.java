@@ -330,7 +330,7 @@ public class ByteStreamService extends ByteStreamImplBase {
     String resourceName = request.getResourceName();
     long offset = request.getReadOffset();
     long limit = request.getReadLimit();
-    boolean compressed = !UrlPath.notCompressed(resourceName);
+    boolean compressed = UrlPath.isCompressed(resourceName);
     logger.log(
         Level.FINER,
         format("read resource_name=%s offset=%d limit=%d", resourceName, offset, limit));
