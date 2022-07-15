@@ -57,7 +57,7 @@ public class UrlPath {
     return ResourceParser.parseDownloadBlobRequest(resourceName).getBlob().getDigest();
   }
 
-  public static boolean notCompressed(String resourceName) throws InvalidResourceNameException {
+  public static boolean notCompressed(String resourceName) {
     return ResourceParser.parseDownloadBlobRequest(resourceName).getBlob().getCompression().equals(Compressor.Value.IDENTITY);
   }
 

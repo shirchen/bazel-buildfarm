@@ -26,12 +26,14 @@ import static java.lang.String.format;
 import build.bazel.remote.execution.v2.Digest;
 import build.bazel.remote.execution.v2.RequestMetadata;
 import build.buildfarm.cas.DigestMismatchException;
+import build.buildfarm.common.CompressionUtils;
 import build.buildfarm.common.EntryLimitException;
 import build.buildfarm.common.UrlPath.InvalidResourceNameException;
 import build.buildfarm.common.Write;
 import build.buildfarm.common.grpc.TracingMetadataUtils;
 import build.buildfarm.common.io.FeedbackOutputStream;
 import build.buildfarm.instance.Instance;
+import com.github.luben.zstd.Zstd;
 import com.google.bytestream.ByteStreamProto.WriteRequest;
 import com.google.bytestream.ByteStreamProto.WriteResponse;
 import com.google.common.util.concurrent.FutureCallback;
@@ -299,6 +301,7 @@ class WriteStreamObserver implements StreamObserver<WriteRequest> {
     long committedSize;
     try {
       committedSize = getCommittedSizeForWrite();
+//      System.out.println("committed size: " + committedSize);
     } catch (IOException e) {
       errorResponse(e);
       return;
@@ -377,6 +380,20 @@ class WriteStreamObserver implements StreamObserver<WriteRequest> {
   @GuardedBy("this")
   private void writeData(ByteString data) throws EntryLimitException {
     try {
+//      boolean compression = false;
+//      if (compression) {
+//        int size = 48;
+//        if (data.size() < 48) {
+//          size = 48;
+//        }
+//        byte[] c = new byte[size];
+//        data.copyTo(c, 0);
+//        data = ByteString.copyFrom(Zstd.decompress(c, 0));
+//      }
+//      if (compression) {
+//        data = CompressionUtils.zstdDecompress(data);
+//      }
+
       data.writeTo(getOutput());
       requestNextIfReady();
       ioMetric.observe(data.size());

@@ -14,10 +14,7 @@
 
 package build.buildfarm.server;
 
-import static build.buildfarm.common.UrlPath.detectResourceOperation;
-import static build.buildfarm.common.UrlPath.parseBlobDigest;
-import static build.buildfarm.common.UrlPath.parseUploadBlobDigest;
-import static build.buildfarm.common.UrlPath.parseUploadBlobUUID;
+import static build.buildfarm.common.UrlPath.*;
 import static com.google.common.util.concurrent.Futures.immediateFailedFuture;
 import static io.grpc.Status.INVALID_ARGUMENT;
 import static io.grpc.Status.NOT_FOUND;
@@ -27,6 +24,7 @@ import static java.lang.String.format;
 import build.bazel.remote.execution.v2.Digest;
 import build.buildfarm.common.DigestUtil;
 import build.buildfarm.common.EntryLimitException;
+import build.buildfarm.common.UrlPath;
 import build.buildfarm.common.UrlPath.InvalidResourceNameException;
 import build.buildfarm.common.Write;
 import build.buildfarm.common.Write.CompleteWrite;
@@ -50,11 +48,9 @@ import io.grpc.Status.Code;
 import io.grpc.stub.CallStreamObserver;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
-import org.apache.commons.compress.compressors.zstandard.ZstdCompressorInputStream;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
 import java.nio.file.NoSuchFileException;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -105,7 +101,7 @@ public class ByteStreamService extends ByteStreamImplBase {
       ReadResponse next() throws IOException {
         int readBytes = in.read(buf, 0, (int) Math.min(remaining, buf.length));
         logger.log(Level.FINE, format("reading buffer %s", buf));
-        buf = Zstd.compress(buf);
+//        buf = Zstd.compress(buf);
         logger.log(Level.FINE, format("after compression buffer %s", buf));
         if (readBytes <= 0) {
           if (readBytes == -1) {
@@ -204,7 +200,7 @@ public class ByteStreamService extends ByteStreamImplBase {
   }
 
   ServerCallStreamObserver<ByteString> newChunkObserver(
-      ServerCallStreamObserver<ReadResponse> responseObserver) {
+      ServerCallStreamObserver<ReadResponse> responseObserver, boolean compressed) {
     return new DelegateServerCallStreamObserver<ByteString, ReadResponse>(responseObserver) {
       @Override
       public void onNext(ByteString data) {
@@ -217,8 +213,7 @@ public class ByteStreamService extends ByteStreamImplBase {
             slice = data;
             data = ByteString.EMPTY;
           }
-          boolean compression = true;
-          if (compression) {
+          if (compressed) {
             byte[] c = new byte[slice.size()];
             slice.copyTo(c, 0);
             slice = ByteString.copyFrom(Zstd.compress(c));
@@ -244,6 +239,7 @@ public class ByteStreamService extends ByteStreamImplBase {
       Digest digest,
       long offset,
       long limit,
+      boolean compressed,
       StreamObserver<ReadResponse> responseObserver) {
     ServerCallStreamObserver<ReadResponse> target =
         onErrorLogReadObserver(
@@ -255,7 +251,7 @@ public class ByteStreamService extends ByteStreamImplBase {
           digest,
           offset,
           limit,
-          newChunkObserver(target),
+          newChunkObserver(target, compressed),
           TracingMetadataUtils.fromCurrentContext());
     } catch (Exception e) {
       target.onError(e);
@@ -267,6 +263,7 @@ public class ByteStreamService extends ByteStreamImplBase {
       Digest digest,
       long offset,
       long limit,
+      boolean compressed,
       StreamObserver<ReadResponse> responseObserver) {
     long available = digest.getSizeBytes() - offset;
     if (available == 0) {
@@ -279,7 +276,7 @@ public class ByteStreamService extends ByteStreamImplBase {
       } else {
         limit = Math.min(available, limit);
       }
-      readLimitedBlob(instance, digest, offset, limit, responseObserver);
+      readLimitedBlob(instance, digest, offset, limit, compressed, responseObserver);
     }
   }
 
@@ -312,11 +309,11 @@ public class ByteStreamService extends ByteStreamImplBase {
   }
 
   void maybeInstanceRead(
-      String resourceName, long offset, long limit, StreamObserver<ReadResponse> responseObserver)
+      String resourceName, long offset, long limit, boolean compressed, StreamObserver<ReadResponse> responseObserver)
       throws InvalidResourceNameException {
     switch (detectResourceOperation(resourceName)) {
       case DOWNLOAD_BLOB_REQUEST:
-        readBlob(instance, parseBlobDigest(resourceName), offset, limit, responseObserver);
+        readBlob(instance, parseBlobDigest(resourceName), offset, limit, compressed, responseObserver);
         break;
       case STREAM_OPERATION_REQUEST:
         readOperationStream(instance, resourceName, offset, limit, responseObserver);
@@ -333,12 +330,13 @@ public class ByteStreamService extends ByteStreamImplBase {
     String resourceName = request.getResourceName();
     long offset = request.getReadOffset();
     long limit = request.getReadLimit();
+    boolean compressed = !UrlPath.notCompressed(resourceName);
     logger.log(
         Level.FINER,
         format("read resource_name=%s offset=%d limit=%d", resourceName, offset, limit));
 
     try {
-      maybeInstanceRead(resourceName, offset, limit, responseObserver);
+      maybeInstanceRead(resourceName, offset, limit, compressed, responseObserver);
     } catch (InvalidResourceNameException e) {
       responseObserver.onError(INVALID_ARGUMENT.withDescription(e.getMessage()).asException());
     }

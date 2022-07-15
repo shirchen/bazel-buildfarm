@@ -71,13 +71,14 @@ public class CompressionUtils {
   /**
    * @brief Decompress a zstandard compressed bytestring.
    * @details creates a new bytestream.
-   * @param data The string to decompress
+   * @param compressedData The string to decompress
    * @return The string in decompressed format.
    * @note Suggested return identifier: data
    */
   public static ByteString zstdDecompress(ByteString compressedData) {
-    int size = (int) Zstd.decompressedSize(compressedData.toByteArray());
-    byte[] data = Zstd.decompress(compressedData.toByteArray(), size);
+    long size = Math.max(compressedData.size(), Zstd.decompressedSize(compressedData.toByteArray()));
+    System.out.println("decompressed size: " + size + " " + compressedData.size());
+    byte[] data = Zstd.decompress(compressedData.toByteArray(), (int)size);
     return ByteString.copyFrom(data);
   }
 }
